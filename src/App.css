@@ -1,0 +1,16 @@
+@import "Fonts.css";
+*{
+  position:absolute;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  height: auto;
+  width: auto;
+  line-height: normal;
+  -ms-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  background: none;
+  font-family: "PTSansBold";
+}
