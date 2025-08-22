@@ -1,16 +1,16 @@
-import React , {useMemo} from 'react';
+import React , {useState, useEffect, useRef, useMemo} from 'react';
 //Импорт хука с контекстом
 import { useAppContext } from '../AppBlock';
 //Импорт интерфейсов
 import {Card, Interval} from './../interfaces/Interfaces';
 //Импорт всего для работы Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Scrollbar, Mousewheel } from 'swiper/modules';
+import { Navigation, Pagination, Mousewheel} from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import 'swiper/css/scrollbar';
 import styled from 'styled-components';
+import './SwiperButtons.css';
 
 const EventsSwiper = () => {
   const {chosenInterval, intervals} = useAppContext();
@@ -22,53 +22,94 @@ const EventsSwiper = () => {
     return sortedIntervals?.[chosenInterval]?.intervalCards ?? [];
   }, [intervals, chosenInterval]);
 
-  return (
-    <Swiper
-      modules={[Navigation, Pagination, Scrollbar, Mousewheel]}
-      style={{ 
-        height: '17%', 
-        width: '89%', 
-        overflow: 'hidden', 
-        top:'75%', 
-        right: '0', 
-        backgroundColor:'#ffdcdc'
-        
-      }}
-      spaceBetween={100}
-      slidesPerView={3}  // Количество видимых слайдов
-      navigation         // Включение стрелок навигации
-      centeredSlides={true}        // Центрирование активного слайда
-      breakpoints={{               // Адаптивность
-        640: { slidesPerView: 2 , centeredSlides: false},
-        1024: { slidesPerView: 3 }
-      }}
-      mousewheel={{ enabled: true }} // Прокрутка колёсиком мыши
-    > 
-      {chosenCards.map((card) => (
-        <SwiperSlide 
-          key={card. text}
-          style={{ height: '100%', width: '33%', overflow: 'hidden'}}>
-          <CardDate>{card.date}</CardDate>
-          <CardText>{card.text}</CardText>
+  //Код для анимации исчезания/появления свайпера
+  const [animating, setAnimating] = useState<boolean>(false);
+  const animationRef = useRef<boolean>(false);
+  const animator = async() => {
+    animationRef.current = false;
+    setAnimating(false);
+    await new Promise(resolve => setTimeout(resolve, 50));
+    animationRef.current = true;
+    setAnimating(true);
+    const startTime: number  = Date.now();
+    while(Date.now() < startTime + 500 && animationRef.current === true){
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    animationRef.current = false;
+    setAnimating(false);
+  }
+  useEffect(() => { animator();}, [chosenInterval]);
 
-        </SwiperSlide>))}
-    </Swiper>
+  return (
+    <SwiperWrapper>
+      <Swiper
+        modules={[Navigation, Pagination, Mousewheel]}
+        style={{ 
+          position: "relative",
+          height: "100%",
+          width: "84%",
+          overflow: "hidden",
+          top: 0,
+          left: "5.5%",
+          background: "none",
+          margin: 0,
+          //Анимация на основе состояния
+          opacity: animating ? 0 : 1,
+          transform: animating ? 'scale(0.95)' : 'scale(1)',
+          transition: "opacity 0.25s ease , transform 0.25s ease",
+          pointerEvents: animating ? "none" : "all",
+        }}
+        spaceBetween={30}
+        slidesPerView={3} 
+        navigation={{
+          nextEl: '.custom-next-btn',
+          prevEl: '.custom-prev-btn',
+        }}
+        centeredSlides={true}
+        breakpoints={{               
+          640: { slidesPerView: 2 , centeredSlides: false},
+          1024: { slidesPerView: 3 }
+        }}
+        mousewheel={{ enabled: true }} // Прокрутка колёсиком мыши
+      > 
+        {/*Карточки событий*/}
+        {chosenCards.map((card) => (
+          <SwiperSlide 
+            key={card. text}
+            style={{ height: '100%', width: '33%', overflow: 'hidden'}}>
+            <CardDate>{card.date}</CardDate>
+            <CardText>{card.text}</CardText>
+
+          </SwiperSlide>))}
+      </Swiper>
+      {/*Кастомные кнопки для свайпера*/}
+      <button className="custom-prev-btn">&lt;</button>
+      <button className="custom-next-btn">&gt;</button>
+    </SwiperWrapper>
   );
 };
 export default EventsSwiper;
-
+//Необходимо, чтобы вынести кнопки навигации наружу из Swiper 
+const SwiperWrapper = styled.footer`
+  top: 75%;
+  height: 16%;
+  width: 100%;
+  background: none;
+`;
 const CardDate = styled.h2`
   top: 0;
   width: 100%;
   font-size: 1.2vw;
   font-family: 'BebasNeueRegular';
-
+  font-weight: 300;
+  color: #3877EE;
 `;
 const CardText = styled.p`
   top: 25%;
   width: 100%;
   height: 50%;
   overflow: hidden;
-  font-size: 1.1vw;
+  font-size: 1vw;
   font-family: 'PtSansRegular';
+  color: #42567A;
 `;

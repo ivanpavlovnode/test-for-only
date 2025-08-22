@@ -1,0 +1,26 @@
+.custom-prev-btn{
+  display: block;
+  aspect-ratio: 1/ 1;
+  position: absolute;
+  font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+  font-size: 1.1vw;
+  left: 0;
+  top: 18%;
+  width: 3%;
+  background-color: #FFFFFF;
+  border-radius: 100%;
+  color: #3877EE;
+}
+.custom-next-btn{
+  display: block;
+  aspect-ratio: 1/ 1;
+  position: absolute;
+  font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+  font-size: 1.1vw;
+  right: 0;
+  top: 18%;
+  width: 3%;
+  background-color: #FFFFFF;
+  border-radius: 100%;
+  color: #3877EE;
+}

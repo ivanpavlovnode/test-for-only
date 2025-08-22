@@ -19,85 +19,97 @@ export const useAppContext = () => {
 };
 
 function AppBlock() {
+  //useRef для анимаций
+  const chosen_interval = useRef(0);
+  const previous_interval = useRef<number>(0);
+  const intervals_ref = useRef<Interval[]>([]);
+  const start_date = useRef<number>(0);
+  const end_date = useRef<number>(0);
   //Состояние для хранения текущего выбранного интервала
   const [chosenInterval, setChosenInterval] = useState<number>(0);
   //Для корректной работы анимаций нужен useRef
-  
-  //Вспомогательное состояние для хранения номера предыдущего интервала
-  const previousInterval = useRef<number>(0);
   //Массив объектов временнЫх интервалов
   const [intervals, setIntervals] = useState<Interval[]>([]);
+  //Состояния для отображения текущих дат 
+  const[startDate, setStartDate] = useState(0);
+  const[endDate, setEndDate] = useState(0);
 
-  // Вспомогательные переменные для анимации дат 
-  // внутри styled DateInterval
-  const startDate = useRef<number>(0);
-  const endDate = useRef<number>(0);
-  const [before, callUpdate] = useState(0);
-
-  // Функции для анимации и эффект для вызова
+  // Функции для расчета промежутка между изменениями дат
   const stepDelay = (current: number, previous: number) => {
     const difference: number = Math.abs(current - previous);
     if (difference === 0) return 0;
     return 200 / difference;
   }
+  //Функция для ожидания между изменениями
   async function wait(ms:number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+  //Функция для плавного изменения дат и вывода в setState
   const animate = async(
     startInterval:number, 
     target: number,
-    valueRef: React.RefObject<number>) => {
-    if(startInterval !== chosenInterval) return;
+    valueRef: React.RefObject<number>,
+    valueState: React.Dispatch<React.SetStateAction<number>>) => {
+    if(startInterval !== chosen_interval.current) return;
     if(valueRef.current === target) return;
     const direction = valueRef.current > target ? -1 : 1;
-    while(startInterval === chosenInterval && valueRef.current !== target){
-      if(startInterval !== chosenInterval) break;
+    while(startInterval === chosen_interval.current && valueRef.current !== target){
+      if(startInterval !== chosen_interval.current) break;
       if(valueRef.current === target) break;
       await wait(stepDelay(valueRef.current, target));
-      callUpdate(before + 1);
       valueRef.current += direction;
+      valueState(valueRef.current);
     }
     valueRef.current = target;
-    callUpdate(before + 1);
   }
   
-  useEffect(() => {
+  const animationCaller = () => {
     animate(
-      chosenInterval, 
-      intervals?.[chosenInterval]?.intervalStart ?? 1, 
-      startDate);
+      chosen_interval.current, 
+      intervals_ref.current?.[chosen_interval.current]?.intervalStart ?? 1, 
+      start_date,
+      setStartDate);
     animate(
-      chosenInterval, 
-      intervals?.[chosenInterval]?.intervalEnd ?? 1, 
-      endDate);
-    }, [chosenInterval]);
+      chosen_interval.current, 
+      intervals_ref.current?.[chosen_interval.current]?.intervalEnd ?? 1, 
+      end_date,
+      setEndDate);
+  }
 
   //Эффект для инициализации интервалов, имитирует общение с API
   useEffect(() => {
+    intervals_ref.current = SixIntervals;
     setIntervals(SixIntervals);
-      startDate.current =  SixIntervals?.[0]?.intervalStart ?? 404;
-      endDate.current =  SixIntervals?.[0]?.intervalEnd ?? 404;
+      setStartDate(SixIntervals?.[0]?.intervalStart ?? 404);
+      setEndDate(SixIntervals?.[0]?.intervalEnd ?? 404);
+      start_date.current =  SixIntervals?.[0]?.intervalStart ?? 404;
+      end_date.current =  SixIntervals?.[0]?.intervalEnd ?? 404;
   }, []);
-
 
   // Фукнция переключения интервала для кнопок
   // Она же записывает номер предыдущего интервала
   const IntervalSwitcher = async(action: string | number) => {
-    if(action === 'minus' && chosenInterval > 0){
-      previousInterval.current = chosenInterval;
-      setChosenInterval(chosenInterval - 1);
+    if(action === 'minus' && chosen_interval.current > 0){
+      previous_interval.current = chosen_interval.current;
+      chosen_interval.current -= 1;
+      setChosenInterval(chosen_interval.current);
+      animationCaller();
     }
-    else if(action === 'plus' && chosenInterval < (intervals.length - 1 )){
-      previousInterval.current = chosenInterval;
-      setChosenInterval(chosenInterval + 1);
+    else if(action === 'plus' && chosen_interval.current < (intervals_ref.current.length - 1 )){
+      previous_interval.current = chosen_interval.current;
+      chosen_interval.current += 1;
+      setChosenInterval(chosen_interval.current);
+      animationCaller();
     }
     // Если даем в функцию число, то это ЧИСЛО 
     // ДОЛЖНО БЫТЬ КОРРЕКТНЫМ ИНДЕКСОМ МАССИВА
     // Но проверку добавил
     else if(typeof action === 'number'){
-      if(action > (intervals.length - 1)) return;
-      previousInterval.current = chosenInterval;
+      if(action > (intervals_ref.current.length - 1)) return;
+      previous_interval.current = chosen_interval.current;
+      chosen_interval.current = action;
       setChosenInterval(action);
+      animationCaller();
     }
     else return;
   };
@@ -110,11 +122,11 @@ function AppBlock() {
             <h1>Исторические <br/> даты</h1>
           </Header>
           <DateInterval>
-            <p style={{color:'rgba(93, 95, 239, 1)'}}>{startDate.current}</p>
-            <p style={{color:'rgba(239, 93, 168, 1)'}}>{endDate.current}</p>
+            <p style={{color:'rgba(93, 95, 239, 1)'}}>{startDate}</p>
+            <p style={{color:'rgba(239, 93, 168, 1)'}}>{endDate}</p>
           </DateInterval>
           <AdditionalButtons>
-            <p>0{chosenInterval + 1}/0{intervals.length}</p>
+            <p>0{chosen_interval.current + 1}/0{intervals_ref.current.length}</p>
             <button 
               style={{bottom:'0', left: '0'}}
               onClick = {() => {IntervalSwitcher('minus')}}
@@ -240,21 +252,21 @@ const AdditionalButtons = styled.div`
     aspect-ratio: 1/ 1;
     width: 40%;
     border-style: solid;
-    border-color: rgba(153, 159, 172, 0.5);
-    border-width: 0.1vw;
+    border-color: rgba(52, 53, 58, 0.5);
+    border-width: 0.08vw;
     border-radius: 100%;
     font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
     font-weight: 400;
     font-size: 1.5vw;
     line-height: 1;
-    color: rgba(66, 86, 122, 0.6);
+    color: rgba(23, 31, 44, 0.6);
     &:hover{
-      background-color: #e9e9e9;
-      color: rgba(66, 86, 122, 1);
+      background-color: #ffffff;
+      color: rgba(23, 31, 44, 0.6);
     }
     &:active{
-      background-color: #c9c8c8;
-      color: #000000;
+      background-color: #ffffff;
+      color: rgba(23, 31, 44, 0.6);
     }
   }
 `;
