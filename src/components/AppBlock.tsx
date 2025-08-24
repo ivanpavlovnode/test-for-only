@@ -232,7 +232,8 @@ function AppBlock() {
             <AdditionalButtons
               style = {{
               width: '20%',
-              top: '88%'
+              top: '88%',
+              zIndex: 10
             }}>
               <p>0{chosen_interval.current + 1}/0{intervals_ref.current.length}</p>
               <button 

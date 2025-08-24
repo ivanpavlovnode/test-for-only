@@ -30,3 +30,28 @@
   pointer-events: none !important;
   transition: opacity 0.3s ease;
 }
+
+/*Полоска пагинации*/
+.swiper-pagination {
+  position: absolute;
+  left: 55% !important;
+  top: 90% !important;
+
+}
+/*Отдельные точки пагинации*/
+.swiper-pagination-bullet {
+  aspect-ratio: 1/1;
+  width: 2vw;
+  height: auto;
+  transform: scale(1) !important;
+  margin: 0 2vw !important;
+}
+/* Стиль активной точки */
+.swiper-pagination-bullet-active {
+  background: #42567A;
+}
+.swiper-pagination-bullet-active-main,
+.swiper-pagination-bullet-active-prev,
+.swiper-pagination-bullet-active-next {
+  transform: scale(1) !important;
+}

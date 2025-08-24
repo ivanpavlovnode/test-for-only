@@ -10,7 +10,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import styled from 'styled-components';
-import './SwiperButtons.css';
+import './SwiperStyle.css';
 
 const EventsSwiper = () => {
   const {chosenInterval, intervals} = useAppContext();
@@ -65,6 +65,9 @@ const EventsSwiper = () => {
           768: {
             slidesPerView: 3,
             spaceBetween: 30,
+             pagination: {
+              enabled: false
+            }
           }
         }}
         navigation={{
@@ -74,6 +77,11 @@ const EventsSwiper = () => {
         centeredSlides={false}
         mousewheel={{ enabled: true }}
         watchOverflow={true}
+        pagination={{
+          clickable: true,
+          dynamicBullets: true,
+          dynamicMainBullets: 0
+        }}
       > 
         {/*Карточки событий*/}
         {chosenCards.map((card) => (
@@ -102,7 +110,7 @@ const SwiperWrapper = styled.footer`
   background: none;
   @media screen and (max-width: 768px) {
     top: 53%;
-    height: 34%;
+    height: 42%;
     width: 100%;
   }
 `;
