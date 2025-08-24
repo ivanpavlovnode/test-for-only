@@ -59,8 +59,14 @@ const EventsSwiper = () => {
           transition: "opacity 0.25s ease , transform 0.25s ease",
           pointerEvents: animating ? "none" : "all",
         }}
-        spaceBetween={30}
-        slidesPerView={3} 
+        spaceBetween={20}
+        slidesPerView={1.5}
+        breakpoints={{
+          768: {
+            slidesPerView: 3,
+            spaceBetween: 30,
+          }
+        }}
         navigation={{
           nextEl: '.custom-next-btn',
           prevEl: '.custom-prev-btn',
@@ -68,12 +74,12 @@ const EventsSwiper = () => {
         centeredSlides={false}
         mousewheel={{ enabled: true }}
         watchOverflow={true}
-    > 
+      > 
         {/*Карточки событий*/}
         {chosenCards.map((card) => (
           <SwiperSlide 
             key={card. text}
-            style={{ height: '100%', width: '33%', overflow: 'hidden'}}>
+            style={{ height: '100%', overflow: 'hidden'}}>
             <CardDate>{card.date}</CardDate>
             <CardText>{card.text}</CardText>
 
@@ -94,6 +100,11 @@ const SwiperWrapper = styled.footer`
   height: 15%;
   width: 100%;
   background: none;
+  @media screen and (max-width: 768px) {
+    top: 53%;
+    height: 34%;
+    width: 100%;
+  }
 `;
 const CardDate = styled.h2`
   top: 0;
@@ -102,6 +113,9 @@ const CardDate = styled.h2`
   font-family: 'BebasNeueRegular';
   font-weight: 300;
   color: #3877EE;
+  @media screen and (max-width: 768px) {
+    font-size: 6vw;
+  }
 `;
 const CardText = styled.p`
   top: 25%;
@@ -111,4 +125,8 @@ const CardText = styled.p`
   font-size: 1vw;
   font-family: 'PtSansRegular';
   color: #42567A;
+  @media screen and (max-width: 768px) {
+    top: 20%;
+    font-size: 4vw;
+  }
 `;

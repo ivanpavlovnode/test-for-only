@@ -5,9 +5,11 @@ import styled from 'styled-components';
 import EventsSwiper from './subcomponents/EventsSwiper';
 import IntervalsCircle from './subcomponents/IntervalsCircle';
 //Затычки вместо данных
-import {TwoIntervals, SixIntervals} from './subcomponents/ArtificialData';
+import {TwoIntervals, FourIntervals, SixIntervals} from './subcomponents/ArtificialData';
 //Импорт интерфейсов
 import {Card, Interval, IntervalContext} from './interfaces/Interfaces';
+//Хук для определения размера экрана при условном рендеринге
+import useDeviceType from './hooks/useDeviceType';
 //Контекст для использования в компонентах
 export const AppContext = createContext<IntervalContext | undefined>(undefined);
 export const useAppContext = () => {
@@ -19,6 +21,8 @@ export const useAppContext = () => {
 };
 
 function AppBlock() {
+  //Для хранения типа верстки, присваивается через хук useDeviceType перед return
+  const isMobile = useRef<boolean>(false);
   //useRef для анимаций
   const chosen_interval = useRef(0);
   const previous_interval = useRef<number>(0);
@@ -77,28 +81,31 @@ function AppBlock() {
       setEndDate);
   }
 
+
+
+
+
+  //Функция инициализации приложения
+  const initializeApp = (intervals: Interval[]) => {
+    intervals_ref.current = intervals;
+    setIntervals(intervals);
+      setStartDate(intervals?.[0]?.intervalStart ?? 404);
+      setEndDate(intervals?.[0]?.intervalEnd ?? 404);
+      start_date.current =  intervals?.[0]?.intervalStart ?? 404;
+      end_date.current =  intervals?.[0]?.intervalEnd ?? 404;
+  }
   // Эффект для инициализации интервалов, имитирует общение с API
-  // ЧТОБЫ ПРОВЕРИТЬ С ДВУМЯ ИНТЕРВАЛАМИ, НУЖНО ЗАМЕНИТЬ
-  // SixIntervals на TwoIntervals здесь в 6 местах.
-  // Закомментированный вариант нижен для удобства
+  // есть также FourIntervals и TwoIntervals для теста
   useEffect(() => {
-    intervals_ref.current = SixIntervals;
-    setIntervals(SixIntervals);
-      setStartDate(SixIntervals?.[0]?.intervalStart ?? 404);
-      setEndDate(SixIntervals?.[0]?.intervalEnd ?? 404);
-      start_date.current =  SixIntervals?.[0]?.intervalStart ?? 404;
-      end_date.current =  SixIntervals?.[0]?.intervalEnd ?? 404;
+    initializeApp(SixIntervals);
   }, []);
-  /*
-  useEffect(() => {
-    intervals_ref.current = TwoIntervals;
-    setIntervals(TwoIntervals);
-      setStartDate(TwoIntervals?.[0]?.intervalStart ?? 404);
-      setEndDate(TwoIntervals?.[0]?.intervalEnd ?? 404);
-      start_date.current =  TwoIntervals?.[0]?.intervalStart ?? 404;
-      end_date.current =  TwoIntervals?.[0]?.intervalEnd ?? 404;
-  }, []);
-  */
+
+
+
+
+
+
+
 
   // Фукнция переключения интервала для кнопок
   // Она же записывает номер предыдущего интервала
@@ -127,35 +134,130 @@ function AppBlock() {
     }
     else return;
   };
-  return(
-    <AppContext.Provider value={{chosenInterval, intervals, setChosenInterval, IntervalSwitcher}}>
-      <FullscreenBlock>
-        <App>
-          <Header>
-            <HeaderStripe></HeaderStripe>
-            <h1>Исторические <br/> даты</h1>
-          </Header>
-          <DateInterval>
-            <p style={{color:'rgba(93, 95, 239, 1)'}}>{startDate}</p>
-            <p style={{color:'rgba(239, 93, 168, 1)'}}>{endDate}</p>
-          </DateInterval>
-          <AdditionalButtons>
-            <p>0{chosen_interval.current + 1}/0{intervals_ref.current.length}</p>
-            <button 
-              style={{bottom:'0', left: '0'}}
-              onClick = {() => {IntervalSwitcher('minus')}}
-            >&lt;</button>
-            <button 
-              style={{bottom:'0', right: '0'}}
-              onClick = {() => {IntervalSwitcher('plus')}}
-            >&gt;</button>
-          </AdditionalButtons>
-          <EventsSwiper></EventsSwiper>
-          <IntervalsCircle></IntervalsCircle>
-        </App>
-      </FullscreenBlock>
-    </AppContext.Provider>
-  );
+
+  // Код для анимации исчезания/появления полосы и имени интервала в мобильной верстке
+  // Дублировал из EventsSwiper, так как зависимость chosenInterval есть здесь, проще повторить
+  // Чем передавать в контекст эффект, работающий на состоянии из этого элемента
+    const [animating, setAnimating] = useState<boolean>(false);
+    const animationRef = useRef<boolean>(false);
+    const animator = async() => {
+      animationRef.current = false;
+      setAnimating(false);
+      await new Promise(resolve => setTimeout(resolve, 50));
+      animationRef.current = true;
+      setAnimating(true);
+      const startTime: number  = Date.now();
+      while(Date.now() < startTime + 500 && animationRef.current === true){
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+      animationRef.current = false;
+      setAnimating(false);
+    }
+    useEffect(() => { animator();}, [chosenInterval]);
+
+  //Для условного рендеринга
+  isMobile.current = useDeviceType();
+  //Десктопная верстка
+  if(!isMobile.current){
+    return(
+      <AppContext.Provider value={{chosenInterval, intervals, setChosenInterval, IntervalSwitcher}}>
+        <FullscreenBlock>
+          <App>
+            <Header>
+              <HeaderStripe></HeaderStripe>
+              <h1>Исторические <br/> даты</h1>
+            </Header>
+            <DateInterval>
+              <p style={{color:'rgba(93, 95, 239, 1)'}}>{startDate}</p>
+              <p style={{color:'rgba(239, 93, 168, 1)'}}>{endDate}</p>
+            </DateInterval>
+            <AdditionalButtons>
+              <p>0{chosen_interval.current + 1}/0{intervals_ref.current.length}</p>
+              <button 
+                style={{bottom:'0', left: '0'}}
+                onClick = {() => {IntervalSwitcher('minus')}}
+              >&lt;</button>
+              <button 
+                style={{bottom:'0', right: '0'}}
+                onClick = {() => {IntervalSwitcher('plus')}}
+              >&gt;</button>
+            </AdditionalButtons>
+            <EventsSwiper></EventsSwiper>
+            <IntervalsCircle></IntervalsCircle>
+          </App>
+        </FullscreenBlock>
+      </AppContext.Provider>
+    );
+  }
+  //Мобильная верстка
+  else if(isMobile.current){
+    return(
+      <AppContext.Provider value={{chosenInterval, intervals, setChosenInterval, IntervalSwitcher}}>
+        <MobileBlock>
+          <Header style={{left: '3%'}}>
+              <h1 style={{color:'#42567A', fontSize: '7vw'}}>Исторические <br/> даты</h1>
+            </Header>
+          {/* Две больших цветных даты*/}
+          <DateInterval
+            style = {{
+              width: '80%',
+              top: '29%'
+            }}>
+              <p style={{color:'#3877EE', fontSize: '16vw'}}>{startDate}</p>
+              <p style={{color:'#F178B6', fontSize: '16vw'}}>{endDate}</p>
+            </DateInterval>
+            {/* Название интервала над свайпером*/}
+            <IntervalName
+              style = {{
+                //Анимация на основе состояния
+                opacity: animating ? 0 : 1,
+                transform: animating ? 'scale(0.95)' : 'scale(1)',
+                transition: "opacity 0.25s ease , transform 0.25s ease",
+                pointerEvents: animating ? "none" : "all",
+              }}
+            >{intervals[chosenInterval].intervalName}</IntervalName>
+            {/* Серая полоска*/}
+            <MobileStripe
+              style = {{
+                //Анимация на основе состояния
+                opacity: animating ? 0 : 1,
+                transform: animating ? 'scale(0.95)' : 'scale(1)',
+                transition: "opacity 0.25s ease , transform 0.25s ease",
+                pointerEvents: animating ? "none" : "all",
+              }}
+            ></MobileStripe>
+            {/* Свайпер */}
+            <EventsSwiper></EventsSwiper>
+            {/* Кнопки навигации */}
+            <AdditionalButtons
+              style = {{
+              width: '20%',
+              top: '88%'
+            }}>
+              <p>0{chosen_interval.current + 1}/0{intervals_ref.current.length}</p>
+              <button 
+                style={{bottom:'0', left: '0'}}
+                onClick = {() => {IntervalSwitcher('minus')}}
+              >
+                <svg width="10" height="10" viewBox="0 0 6 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.7489 1.04178L1.6239 4.16678L4.7489 7.29178" stroke="#42567A" stroke-width="2"/>
+                </svg>
+              </button>
+              <button 
+                style={{bottom:'0', right: '0'}}
+                onClick = {() => {IntervalSwitcher('plus')}}
+              >
+                <svg width="10" height="10" viewBox="0 0 7 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1.58386 1.04178L4.70886 4.16678L1.58386 7.29178" stroke="#42567A" stroke-width="2"/>
+                </svg>
+              </button>
+            </AdditionalButtons>
+        </MobileBlock>
+      </AppContext.Provider>
+    )
+  }
+  else return (<FullscreenBlock/>)
+
 }
 
 export default AppBlock;
@@ -178,6 +280,16 @@ const FullscreenBlock = styled.div`
   &::-webkit-scrollbar{
     display: none;
   }
+`;
+// Блок на весь экран для мобилок, без фона и скролла
+const MobileBlock = styled.div`
+  display: block;
+  position: relative;
+  width: 100vw;
+  height: 93vh;
+  background-color: #ffffff;
+  overflow: hidden;
+  min-height: 800px;
 `;
 /* красивый альтернативный вариант!!!
   const FullscreenBlock = styled.div`
@@ -220,9 +332,6 @@ const App = styled.div`
     left: 0;
     top: 42.5%;
   }
-  @media (max-width: 768px) {
-    
-  }
 `;
 //Блок с заголовком и градиентной полоской
 const Header = styled.header`
@@ -264,6 +373,9 @@ const AdditionalButtons = styled.div`
   left: 5.5%;
   width: 8.33%;
   height: 9%;
+  @media screen and (max-width: 768px) {
+      height: 15vw;
+  }
   //Номер текущего интервала
   p{
     top: 0;
@@ -271,6 +383,9 @@ const AdditionalButtons = styled.div`
     font-family: "PtSansRegular";
     font-size: 0.8vw;
     color: rgba(66, 86, 122, 0.8);
+    @media screen and (max-width: 768px) {
+      font-size: 5vw;
+    }
     
   }
   //Маленькие круглые кнопки переключения интервала
@@ -295,5 +410,32 @@ const AdditionalButtons = styled.div`
       background-color: #ffffff;
       color: rgba(23, 31, 44, 0.6);
     }
+    @media screen and (max-width: 768px) {
+      border-width: 0.3vw;
+      font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 4vw;
+    }
   }
+  svg{
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left:50%;
+  }
+`;
+const IntervalName = styled.h2`
+  top: 44%;
+  left: 7%;
+  font-family: "PtSansBold";
+  font-size: 5vw;
+  color: rgba(38, 48, 68, 0.8);
+`;
+const MobileStripe = styled.div`
+    position: absolute;
+    display: block;
+    height: 0.2vh;
+    width: 85%;
+    background-color: #C7CDD9;
+    left: 7.5%;
+    top: 50%;
 `;
