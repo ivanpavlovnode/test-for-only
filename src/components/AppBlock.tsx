@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client';
 import styled from 'styled-components';
 //Дочерние компоненты
 import EventsSwiper from './subcomponents/EventsSwiper';
-import IntervalsCircle from './subcomponents/EventsSwiper';
-//Затычка вместо данных
+import IntervalsCircle from './subcomponents/IntervalsCircle';
+//Затычки вместо данных
 import {TwoIntervals, SixIntervals} from './subcomponents/ArtificialData';
 //Импорт интерфейсов
 import {Card, Interval, IntervalContext} from './interfaces/Interfaces';
@@ -27,7 +27,6 @@ function AppBlock() {
   const end_date = useRef<number>(0);
   //Состояние для хранения текущего выбранного интервала
   const [chosenInterval, setChosenInterval] = useState<number>(0);
-  //Для корректной работы анимаций нужен useRef
   //Массив объектов временнЫх интервалов
   const [intervals, setIntervals] = useState<Interval[]>([]);
   //Состояния для отображения текущих дат 
@@ -35,6 +34,7 @@ function AppBlock() {
   const[endDate, setEndDate] = useState(0);
 
   // Функции для расчета промежутка между изменениями дат
+  // Увеличивает интервал к концу для плавной остановки
   const stepDelay = (current: number, previous: number) => {
     const difference: number = Math.abs(current - previous);
     if (difference === 0) return 0;
@@ -44,7 +44,8 @@ function AppBlock() {
   async function wait(ms:number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-  //Функция для плавного изменения дат и вывода в setState
+  // Функция для плавного изменения дат и вывода в setState
+  // Вычисления происходят в useRef'ax, в useState присваиваются после выполнения
   const animate = async(
     startInterval:number, 
     target: number,
@@ -62,7 +63,7 @@ function AppBlock() {
     }
     valueRef.current = target;
   }
-  
+  //Функция для вызова двух независимых анимаций
   const animationCaller = () => {
     animate(
       chosen_interval.current, 
@@ -76,7 +77,10 @@ function AppBlock() {
       setEndDate);
   }
 
-  //Эффект для инициализации интервалов, имитирует общение с API
+  // Эффект для инициализации интервалов, имитирует общение с API
+  // ЧТОБЫ ПРОВЕРИТЬ С ДВУМЯ ИНТЕРВАЛАМИ, НУЖНО ЗАМЕНИТЬ
+  // SixIntervals на TwoIntervals здесь в 6 местах.
+  // Закомментированный вариант нижен для удобства
   useEffect(() => {
     intervals_ref.current = SixIntervals;
     setIntervals(SixIntervals);
@@ -85,10 +89,20 @@ function AppBlock() {
       start_date.current =  SixIntervals?.[0]?.intervalStart ?? 404;
       end_date.current =  SixIntervals?.[0]?.intervalEnd ?? 404;
   }, []);
+  /*
+  useEffect(() => {
+    intervals_ref.current = TwoIntervals;
+    setIntervals(TwoIntervals);
+      setStartDate(TwoIntervals?.[0]?.intervalStart ?? 404);
+      setEndDate(TwoIntervals?.[0]?.intervalEnd ?? 404);
+      start_date.current =  TwoIntervals?.[0]?.intervalStart ?? 404;
+      end_date.current =  TwoIntervals?.[0]?.intervalEnd ?? 404;
+  }, []);
+  */
 
   // Фукнция переключения интервала для кнопок
   // Она же записывает номер предыдущего интервала
-  const IntervalSwitcher = async(action: string | number) => {
+  const IntervalSwitcher = (action: string | number) => {
     if(action === 'minus' && chosen_interval.current > 0){
       previous_interval.current = chosen_interval.current;
       chosen_interval.current -= 1;
@@ -114,7 +128,7 @@ function AppBlock() {
     else return;
   };
   return(
-    <AppContext.Provider value={{chosenInterval, intervals, setChosenInterval}}>
+    <AppContext.Provider value={{chosenInterval, intervals, setChosenInterval, IntervalSwitcher}}>
       <FullscreenBlock>
         <App>
           <Header>
@@ -136,7 +150,8 @@ function AppBlock() {
               onClick = {() => {IntervalSwitcher('plus')}}
             >&gt;</button>
           </AdditionalButtons>
-          <EventsSwiper/>
+          <EventsSwiper></EventsSwiper>
+          <IntervalsCircle></IntervalsCircle>
         </App>
       </FullscreenBlock>
     </AppContext.Provider>
@@ -145,16 +160,13 @@ function AppBlock() {
 
 export default AppBlock;
 /*Элемент, который занимает весь экран, чтобы в нем 
-позиционировать переиспользуемый блок*/
+позиционировать основной блок */
 const FullscreenBlock = styled.div`
+  display: block;
   position: relative;
   width: 100vw;
   height: 100vh;
   min-height: 800px;
-  overflow: scroll;
-  &::-webkit-scrollbar{
-    display: none;
-  }
   background: repeating-linear-gradient(
     90deg,
     #F4F5F9,
@@ -162,7 +174,10 @@ const FullscreenBlock = styled.div`
     #F4F5F9 4%,
     #F6C4C7 4.166%
   );
-  display: block;
+  overflow: scroll;
+  &::-webkit-scrollbar{
+    display: none;
+  }
 `;
 /* красивый альтернативный вариант!!!
   const FullscreenBlock = styled.div`
@@ -182,17 +197,29 @@ const FullscreenBlock = styled.div`
   );
   display: block;
 `; */
+
 const App = styled.div`
   position: absolute;
   display: block;
   top: 50%;
   transform: translateY(-50%);
-  left: 16.7%;
+  left: 16.6%;
   aspect-ratio: 4.4/ 3;
   width: 76%;
   height: auto;
   background: none;
   overflow: hidden;
+  //Добавляем тонкую серую полоску через псевдоэлемент
+  &::before{
+    position: absolute;
+    content: '';
+    display: block;
+    height: 0.07vw;
+    width: 98.5%;
+    background-color: rgba(66, 86, 122, 0.1);
+    left: 0;
+    top: 42.5%;
+  }
   @media (max-width: 768px) {
     
   }
@@ -200,11 +227,11 @@ const App = styled.div`
 //Блок с заголовком и градиентной полоской
 const Header = styled.header`
   height: 13%;
-  width: 28%;
+  width: 35%;
   top: 12%;
   //Заголовок
   h1 {
-    right: 0;
+    left: 16%;
     font-size: 2.8vw;
     color:#42567A;
     line-height: 1.1;

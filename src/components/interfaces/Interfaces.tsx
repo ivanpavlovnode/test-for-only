@@ -16,4 +16,16 @@ export interface IntervalContext {
     chosenInterval: number;
     intervals: Interval[];
     setChosenInterval: React.Dispatch<React.SetStateAction<number>>;
+    IntervalSwitcher: (action: string | number) => void;
+}
+
+//Интерфейс для декартовых координат 
+export interface Cartesian{
+    x: number;
+    y: number;
+}
+//Интерйфейс для полярных координат
+export interface Polar{
+    radius: number;
+    angle: number;
 }

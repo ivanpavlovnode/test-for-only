@@ -240,7 +240,7 @@ export const SixIntervals: Interval[] = [
     {
       intervalName: 'Наука',
       intervalStart: 2000,
-      intervalEnd: 2030,
+      intervalEnd:2030,
       intervalCards: 
       [
         {

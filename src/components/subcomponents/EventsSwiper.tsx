@@ -65,13 +65,10 @@ const EventsSwiper = () => {
           nextEl: '.custom-next-btn',
           prevEl: '.custom-prev-btn',
         }}
-        centeredSlides={true}
-        breakpoints={{               
-          640: { slidesPerView: 2 , centeredSlides: false},
-          1024: { slidesPerView: 3 }
-        }}
-        mousewheel={{ enabled: true }} // Прокрутка колёсиком мыши
-      > 
+        centeredSlides={false}
+        mousewheel={{ enabled: true }}
+        watchOverflow={true}
+    > 
         {/*Карточки событий*/}
         {chosenCards.map((card) => (
           <SwiperSlide 
@@ -91,8 +88,10 @@ const EventsSwiper = () => {
 export default EventsSwiper;
 //Необходимо, чтобы вынести кнопки навигации наружу из Swiper 
 const SwiperWrapper = styled.footer`
+  display: block;
+  position: absolute;
   top: 75%;
-  height: 16%;
+  height: 15%;
   width: 100%;
   background: none;
 `;
